@@ -151,8 +151,17 @@ const parse = (query) => {
     if (match(/(下午|晚上?|PM)/i, query) && hour < 13) hour += 12;
     if (match(/(上午|早上?|AM)/i, query) && hour > 13) hour -= 12;
 
-    result = match(/([0-9零一二两三四五六七八九十百千万]+)[天日]后/, query);
-    if (result) day += convert(result[1]);
+    result = match(/([0-9零一二两三四五六七八九十百千万]+)?个?(月)?([0-9零一二两三四五六七八九十百千万]+)?个?(月|天|日|星期|周|礼拜)后/, query);
+    if (result) {
+        let first_n = result[1] || result[3];
+        let second_n = result[3] || result[1];
+        let month_offset = result[2] || result[4] === '月' ? convert(first_n) : 0;
+        let day_offset = result[4] !== '月' ? convert(second_n) : 0;
+        if (['星期', '周', '礼拜'].includes(result[4]))
+            day_offset *= 7;
+        month += month_offset;
+        day += day_offset;
+    }
 
     result = match(/([0-9零一二两三四五六七八九十百千万]+)?个?(半)?(小时)?([0-9零一二两三四五六七八九十百]+)?(小时|分钟?)后/, query);
     if (result && (result[3] || result[5])) {
@@ -172,6 +181,13 @@ const parse = (query) => {
     while (hour >= 24) {
         hour -= 24;
         day++;
+    }
+    
+    if (day > 100000) {
+        return {
+            target_date: null,
+            command: query
+        };
     }
     
     while (day > get_days_in_month(month, year)) {
@@ -251,8 +267,6 @@ const add_reminder = (date, command) => {
         });
     }
 }
-
-
 
 module.exports = {
     parse: parse,
