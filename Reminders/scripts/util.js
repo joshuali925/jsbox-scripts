@@ -98,7 +98,10 @@ const parse = (query) => {
     }
 
     result = match(/([0-9一二两三四五六七八九十]+)月/, query);
-    if (result) month = convert(result[1]);
+    if (result) {
+        month = convert(result[1]);
+        day = 1;
+    }
 
     result = match(/月([0-9一二两三四五六七八九十]+)[日号]?/, query);
     if (result) day = convert(result[1]);
@@ -117,10 +120,10 @@ const parse = (query) => {
     result = match(/(大*)后天/, query);
     if (result) day += 2 + result[1].length;
 
-    result = match(/([0-9一二两三四五六七八九十]+)点/, query);
+    result = match(/([0-9零一二两三四五六七八九十]+)点整?/, query);
     if (result) hour = convert(result[1]);
 
-    result = match(/点([0-9一二两三四五六七八九十]+)/, query);
+    result = match(/点([0-9零一二两三四五六七八九十]+)/, query);
     if (result) minute = convert(result[1]);
 
     result = match(/点(一|三)刻/, query);
@@ -133,11 +136,11 @@ const parse = (query) => {
     if (match(/(下午|晚上?|PM)/i, query) && hour < 13) hour += 12;
     if (match(/(上午|早上?|AM)/i, query) && hour > 13) hour -= 12;
 
-    result = match(/([0-9一二两三四五六七八九十百]+)天后/, query);
+    result = match(/([0-9零一二两三四五六七八九十百]+)[天日]后/, query);
     if (result) day += convert(result[1]);
 
-    result = match(/([0-9一二两三四五六七八九十百]+)?个?(半)?(小时)?([0-9一二两三四五六七八九十百]+)?(分钟?)?后/, query);
-    if (result) {
+    result = match(/([0-9零一二两三四五六七八九十百]+)?个?(半)?(小时)?([0-9零一二两三四五六七八九十百]+)?(分钟?)?后/, query);
+    if (result && (result[3] || result[5])) {
         let first_n = result[1] || result[4];
         let second_n = result[4] || result[1];
         let hour_offset = result[3] && first_n ? convert(first_n) : 0;
