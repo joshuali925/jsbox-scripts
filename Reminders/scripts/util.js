@@ -46,8 +46,14 @@ const parse = (query) => {
     let command = query;
     let tokens = query.split(' ');
     if (tokens.length > 1) {
-        command = tokens[tokens.length - 1];
-        query = tokens.slice(0, tokens.length - 1).join(' ');
+        command = tokens.slice(1, tokens.length).join(' ')
+        query = tokens[0];
+        if (tokens[0] === '') {
+            return {
+                target_date: null,
+                command: command
+            };
+        }
     }
 
     let alarm_texts = [];
@@ -102,20 +108,11 @@ const parse = (query) => {
         day += offset;
     }
 
-    result = match(/([0-9一二两三四五六七八九十]+)天后/, query);
-    if (result) day += convert(result[1]);
-
     result = match(/(大*)后天/, query);
     if (result) day += 2 + result[1].length;
 
     result = match(/([0-9一二两三四五六七八九十]+)点/, query);
     if (result) hour = convert(result[1]);
-
-    result = match(/([0-9一二两三四五六七八九十]+)小时后/, query);
-    if (result) {
-        hour = now.getHours() + convert(result[1]);
-        minute = now.getMinutes();
-    }
 
     result = match(/点([0-9一二两三四五六七八九十]+)/, query);
     if (result) minute = convert(result[1]);
@@ -123,17 +120,32 @@ const parse = (query) => {
     result = match(/点(一|三)刻/, query);
     if (result) minute = convert(result[1]) * 15;
 
-
-    result = match(/([0-9一二两三四五六七八九十]+)分钟?后/, query);
-    if (result) minute = now.getMinutes() + convert(result[1]);
-
     if (hour < 10) hour += 12; // 10点前默认晚上
-
     if (match(/点半/, query)) minute = 30;
     if (match(/今天?/, query)) {};
     if (match(/明天?/, query)) day++;
     if (match(/(下午|晚上?|PM)/i, query) && hour < 13) hour += 12;
     if (match(/(上午|早上?|AM)/i, query) && hour > 13) hour -= 12;
+
+    result = match(/([0-9一二两三四五六七八九十]+)天后/, query);
+    if (result) day += convert(result[1]);
+
+    result = match(/([0-9一二两三四五六七八九十]+)?个?(半)?(小时)?([0-9一二两三四五六七八九十]+)?(分钟?)?后/, query);
+    if (result) {
+        let hour_offset = result[1] ? convert(result[1]) : 0;
+        let minute_offset = result[4] ? convert(result[4]) : 0;
+        minute_offset = result[2] ? 30 : minute_offset;
+        hour = now.getHours() + hour_offset;
+        minute = now.getMinutes() + minute_offset;
+        if (minute >= 60) {
+            hour++;
+            minute -= 60;
+        }
+        if (hour >= 24) {
+            day++;
+            hour -= 24;
+        }
+    }
 
     if (alarm_texts.length === 0) {
         return {
@@ -163,7 +175,6 @@ const parse = (query) => {
             day_str = 'Tomorrow';
     }
     let date_str = `${day_str}, ${day_name[target_date.getDay()]}, ${hour_12}:${minute_padded} ${AP}`;
-
 
     if (tokens.length === 1) {
         let mask = Array.from({
