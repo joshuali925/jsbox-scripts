@@ -63,13 +63,15 @@ const parse = (query) => {
     // 明早八点起床 去星期五买早饭 => alarm: 明早八点, todo: 起床 去星期五..., no parsing done after first ' '
     let command = query;
     let space_index = query.indexOf(' ');
+    // if starts with ' ', no parsing done
     if (space_index >= 0) {
         if (space_index === 0) {
             return {
                 target_date: null,
-                command: command.slice(1)
+                command: command.trim(),
             };
         }
+        // otherwise only parse until first ' '
         query = query.slice(0, space_index);
     }
 
@@ -96,6 +98,7 @@ const parse = (query) => {
     if (match(/下午/, query)) hour = 15;
     if (match(/晚上?/, query)) hour = 20;
 
+    // mm/dd/yyyy
     result = match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/, query);
     if (result) {
         month = convert(result[1]);
@@ -103,6 +106,7 @@ const parse = (query) => {
         year = convert(result[3]);
     }
 
+    // hh:MM
     result = match(/(\d{1,2}):(\d{1,2})/, query);
     if (result) {
         hour = convert(result[1]);
@@ -138,7 +142,7 @@ const parse = (query) => {
     result = match(/([0-9零一二两三四五六七八九十]+)点整?/, query);
     if (result) hour = convert(result[1]);
 
-    result = match(/点([0-9零一二两三四五六七八九十]+)/, query);
+    result = match(/点([0-9零一二两三四五六七八九十]+)分?/, query);
     if (result) minute = convert(result[1]);
 
     result = match(/点(一|三)刻/, query);
@@ -163,7 +167,7 @@ const parse = (query) => {
         day += day_offset;
     }
 
-    result = match(/([0-9零一二两三四五六七八九十百千万]+)?个?(半)?(小时)?([0-9零一二两三四五六七八九十百]+)?(小时|分钟?)后/, query);
+    result = match(/([0-9零一二两三四五六七八九十百千万]+)?个?(半)?(小时)?([0-9零一二两三四五六七八九十百]+)?个?(小时|分钟?)后/, query);
     if (result && (result[3] || result[5])) {
         let first_n = result[1] || result[4];
         let second_n = result[4] || result[1];
