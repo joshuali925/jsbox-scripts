@@ -18,13 +18,19 @@ $ui.render({
         events: {
             changed: (sender) => {
                 parsed = parse($("input").text);
-                $('alarm').text = 'Alarm: ' + parsed.date_str;
-                $('label').text = 'Todo: ' + parsed.command;
+                if (parsed.target_date) {
+                    $('alarm').text = 'Alarm: ' + parsed.date_str;
+                } else {
+                    $('alarm').text = 'Alarm: No alarm';
+                }
+                $('todo').text = 'Todo: ' + parsed.command;
             },
             returned: (sender) => {
                 if ($('input').text) {
                     add_reminder(parsed.target_date, parsed.command);
                     $('input').text = '';
+                    $('alarm').text = 'Alarm: No alarm';
+                    $('todo').text = 'Todo: ';
                 } else {
                     sender.blur();
                 }
@@ -36,7 +42,7 @@ $ui.render({
         type: "label",
         props: {
             id: 'alarm',
-            text: 'Alarm:',
+            text: 'Alarm: No alarm',
         },
         layout: function (make, view) {
             make.top.equalTo($('input').bottom).inset(10);
@@ -47,6 +53,7 @@ $ui.render({
     {
         type: "label",
         props: {
+            id: 'todo',
             text: 'Todo:',
         },
         layout: function (make, view) {

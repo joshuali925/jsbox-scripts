@@ -49,7 +49,7 @@ const parse = (query) => {
         command = tokens[tokens.length - 1];
         query = tokens.slice(0, tokens.length - 1).join(' ');
     }
-    
+
     let alarm_texts = [];
     let match = (pattern, query) => {
         let result = pattern.exec(query);
@@ -58,7 +58,7 @@ const parse = (query) => {
         }
         return result;
     }
-    
+
     let now = new Date(),
         result;
     let year = now.getFullYear(),
@@ -67,31 +67,31 @@ const parse = (query) => {
     let hour = 10,
         minute = 0; // defaults hour to 10 AM and minute to 0
 
-    if (match(/上午/g, query)) hour = 10;
-    if (match(/中午/g, query)) hour = 12;
-    if (match(/下午/g, query)) hour = 15;
-    if (match(/晚上?/g, query)) hour = 20;
-    
-    result = match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/g, query);
+    if (match(/上午/, query)) hour = 10;
+    if (match(/中午/, query)) hour = 12;
+    if (match(/下午/, query)) hour = 15;
+    if (match(/晚上?/, query)) hour = 20;
+
+    result = match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/, query);
     if (result) {
         month = convert(result[1]);
         day = convert(result[2]);
         year = convert(result[3]);
     }
-    
-    result = match(/(\d{1,2}):(\d{1,2})/g, query);
+
+    result = match(/(\d{1,2}):(\d{1,2})/, query);
     if (result) {
         hour = convert(result[1]);
         minute = convert(result[2]);
     }
 
-    result = match(/([0-9一二两三四五六七八九十]+)月/g, query);
+    result = match(/([0-9一二两三四五六七八九十]+)月/, query);
     if (result) month = convert(result[1]);
 
-    result = match(/月([0-9一二两三四五六七八九十]+)[日号]?/g, query);
+    result = match(/月([0-9一二两三四五六七八九十]+)[日号]?/, query);
     if (result) day = convert(result[1]);
 
-    result = match(/(下*)(星期|周|礼拜)([1-7一二三四五六天日])/g, query);
+    result = match(/(下*)(星期|周|礼拜)([1-7一二三四五六天日])/, query);
     if (result) {
         let day_of_week = now.getDay();
         if (day_of_week === 0) day_of_week += 7; // let week start at Monday
@@ -102,37 +102,45 @@ const parse = (query) => {
         day += offset;
     }
 
-    result = match(/([0-9一二两三四五六七八九十]+)天后/g, query);
+    result = match(/([0-9一二两三四五六七八九十]+)天后/, query);
     if (result) day += convert(result[1]);
 
-    result = match(/(大*)后天/g, query);
+    result = match(/(大*)后天/, query);
     if (result) day += 2 + result[1].length;
 
-    result = match(/([0-9一二两三四五六七八九十]+)点/g, query);
+    result = match(/([0-9一二两三四五六七八九十]+)点/, query);
     if (result) hour = convert(result[1]);
 
-    result = match(/([0-9一二两三四五六七八九十]+)小时后/g, query);
+    result = match(/([0-9一二两三四五六七八九十]+)小时后/, query);
     if (result) {
         hour = now.getHours() + convert(result[1]);
         minute = now.getMinutes();
     }
 
-    result = match(/点([0-9一二两三四五六七八九十]+)/g, query);
+    result = match(/点([0-9一二两三四五六七八九十]+)/, query);
     if (result) minute = convert(result[1]);
 
-    result = match(/点(一|三)刻/g, query);
+    result = match(/点(一|三)刻/, query);
     if (result) minute = convert(result[1]) * 15;
 
 
-    result = match(/([0-9一二两三四五六七八九十]+)分钟?后/g, query);
+    result = match(/([0-9一二两三四五六七八九十]+)分钟?后/, query);
     if (result) minute = now.getMinutes() + convert(result[1]);
 
     if (hour < 10) hour += 12; // 10点前默认晚上
 
-    if (match(/点半/g, query)) minute = 30;
-    if (match(/明天?/g, query)) day++;
-    if (match(/(下午|晚上?|PM)/gi, query) && hour < 13) hour += 12;
-    if (match(/(上午|早上?|AM)/gi, query) && hour > 13) hour -= 12;
+    if (match(/点半/, query)) minute = 30;
+    if (match(/今天?/, query)) {};
+    if (match(/明天?/, query)) day++;
+    if (match(/(下午|晚上?|PM)/i, query) && hour < 13) hour += 12;
+    if (match(/(上午|早上?|AM)/i, query) && hour > 13) hour -= 12;
+
+    if (alarm_texts.length === 0) {
+        return {
+            target_date: null,
+            command: query
+        };
+    }
 
     let target_date = new Date(year, month - 1, day, hour, minute, 0, 0);
     let hour_12 = hour,
@@ -155,10 +163,12 @@ const parse = (query) => {
             day_str = 'Tomorrow';
     }
     let date_str = `${day_str}, ${day_name[target_date.getDay()]}, ${hour_12}:${minute_padded} ${AP}`;
-    
-    
+
+
     if (tokens.length === 1) {
-        let mask = Array.from({length: command.length}, (v, i) => true);
+        let mask = Array.from({
+            length: command.length
+        }, (v, i) => true);
         for (let i = 0; i < alarm_texts.length; i++) {
             let start = alarm_texts[i][0];
             let end = alarm_texts[i][1];
@@ -183,14 +193,18 @@ const parse = (query) => {
 }
 
 const add_reminder = (date, command) => {
-    $reminder.create({
-        title: command,
-        alarmDate: date,
-        url: "",
-        handler: function(resp) {
-            $ui.toast("Reminder added!");
-        }
-    });
+    if (!command) {
+        $ui.toast("Empty todo!");
+    } else {
+        $reminder.create({
+            title: command,
+            alarmDate: date,
+            url: "",
+            handler: function (resp) {
+                $ui.toast("Reminder added!");
+            }
+        });
+    }
 }
 
 
@@ -199,4 +213,3 @@ module.exports = {
     parse: parse,
     add_reminder: add_reminder,
 };
-
