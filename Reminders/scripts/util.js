@@ -139,11 +139,11 @@ const parse = (query) => {
         minute_offset = result[3] && result[2] ? 30 : minute_offset;
         hour = now.getHours() + hour_offset;
         minute = now.getMinutes() + minute_offset;
-        if (minute >= 60) {
+        while (minute >= 60) {
             hour++;
             minute -= 60;
         }
-        if (hour >= 24) {
+        while (hour >= 24) {
             day++;
             hour -= 24;
         }
