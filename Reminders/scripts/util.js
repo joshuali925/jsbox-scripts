@@ -46,10 +46,12 @@ const convert = (s) => {
     return n;
 }
 
+let month_days = [null, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
 const parse = (query) => {
     // 明早八点 去买早饭 => target_date command
-    //  明早八点 去买早饭 => query[0] = ' ', no parsing done
-    // 明早八点起床 去星期五买早饭 => alarm: 明早八点, todo: 起床 去..., no parsing done after first ' '
+    //  明早八点 去买早饭 => query[0] = ' ', no parsing done at all
+    // 明早八点起床 去星期五买早饭 => alarm: 明早八点, todo: 起床 去星期五..., no parsing done after first ' '
     let command = query;
     let space_index = query.indexOf(' ');
     if (space_index >= 0) {
@@ -79,6 +81,7 @@ const parse = (query) => {
     let hour = 10,
         minute = 0; // defaults hour to 10 AM and minute to 0
 
+    if (match(/早上?/, query)) hour = 8;
     if (match(/上午/, query)) hour = 10;
     if (match(/中午/, query)) hour = 12;
     if (match(/下午/, query)) hour = 15;
@@ -97,14 +100,17 @@ const parse = (query) => {
         minute = convert(result[2]);
     }
 
-    result = match(/([0-9一二两三四五六七八九十]+)月/, query);
+    result = match(/([0-9一二两三四五六七八九十]+)月(初|中旬?|底)?([0-9一二两三四五六七八九十]+)?[日号]?/, query);
     if (result) {
         month = convert(result[1]);
         day = 1;
+        if (result[2] && result[2][0] === '中') {
+            day = Math.floor(month_days[month] / 2);
+        } else if (result[2] === '底') {
+            day = month_days[month];
+        }
+        day = result[3] ? convert(result[3]) : day;
     }
-
-    result = match(/月([0-9一二两三四五六七八九十]+)[日号]?/, query);
-    if (result) day = convert(result[1]);
 
     result = match(/(下*)(星期|周|礼拜)([1-7一二三四五六天日])/, query);
     if (result) {
@@ -151,12 +157,20 @@ const parse = (query) => {
     }
     
     while (minute >= 60) {
-        hour++;
         minute -= 60;
+        hour++;
     }
     while (hour >= 24) {
-        day++;
         hour -= 24;
+        day++;
+    }
+    while (day > month_days[month]) {
+        day -= month_days[month];
+        month++;
+        if (month > 12) {
+            month -= 12;
+            year++;
+        }
     }
 
     if (alarm_texts.length === 0) {
@@ -179,8 +193,8 @@ const parse = (query) => {
     // let month_name = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     let day_name = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     let minute_padded = minute > 10 ? minute : '0' + minute;
-    let day_str = `${month_name[month - 1]} ${day}`;
-    if (month - 1 === now.getMonth()) {
+    let day_str = `${month_name[month - 1]} ${day}, ${year}`;
+    if (month - 1 === now.getMonth() && year === now.getFullYear()) {
         if (day === now.getDate())
             day_str = 'Today';
         else if (day === now.getDate() + 1)
