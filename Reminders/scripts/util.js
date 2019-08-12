@@ -23,19 +23,25 @@ const nums = {
     '8': 8,
     '9': 9,
 }
+let units = {
+    '十': 10,
+    '百': 100,
+    '千': 1000,
+    '万': 10000,
+}
 
 const convert = (s) => {
     let n = 0;
-    let unit = 10;
-    if (s === '十')
-        return 10;
+    if (s[0] === '十')
+        s = '一' + s;
 
     for (const c of s) {
         if (c in nums) {
-            n = n * unit + nums[c];
-        } else if (c === '十' && s.length === 2) {
-            n = n === 0 ? 1 : n * 10;
+            n = n * 10 + nums[c];
         }
+    }
+    if (s[s.length - 1] in units) {
+        n *= units[s[s.length - 1]];
     }
     return n;
 }
@@ -127,10 +133,10 @@ const parse = (query) => {
     if (match(/(下午|晚上?|PM)/i, query) && hour < 13) hour += 12;
     if (match(/(上午|早上?|AM)/i, query) && hour > 13) hour -= 12;
 
-    result = match(/([0-9一二两三四五六七八九十]+)天后/, query);
+    result = match(/([0-9一二两三四五六七八九十百]+)天后/, query);
     if (result) day += convert(result[1]);
 
-    result = match(/([0-9一二两三四五六七八九十]+)?个?(半)?(小时)?([0-9一二两三四五六七八九十]+)?(分钟?)?后/, query);
+    result = match(/([0-9一二两三四五六七八九十百]+)?个?(半)?(小时)?([0-9一二两三四五六七八九十百]+)?(分钟?)?后/, query);
     if (result) {
         let first_n = result[1] || result[4];
         let second_n = result[4] || result[1];
@@ -194,7 +200,7 @@ const parse = (query) => {
             new_command += command[i];
         }
     }
-    command = new_command;
+    command = new_command.trim();
 
     return {
         target_date,
