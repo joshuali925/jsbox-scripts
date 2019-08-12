@@ -45,15 +45,15 @@ const parse = (query) => {
     //  明早八点 去买早饭 => query[0] = ' ', no parsing done
     // 明早八点起床 去星期五买早饭 => alarm: 明早八点, todo: 起床 去..., no parsing done after first ' '
     let command = query;
-    let tokens = query.split(' ');
-    if (tokens.length > 1) {
-        query = tokens[0];
-        if (query.length === 0) {
+    let space_index = query.indexOf(' ');
+    if (space_index >= 0) {
+        if (space_index === 0) {
             return {
                 target_date: null,
-                command: command
+                command: command.slice(1)
             };
         }
+        query = query.slice(0, space_index);
     }
 
     let alarm_texts = [];
