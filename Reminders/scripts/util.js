@@ -50,9 +50,18 @@ const parse = (query) => {
         query = tokens.slice(0, tokens.length - 1).join(' ');
     }
     
+    let alarm_texts = [];
+    let match = (pattern, query) => {
+        let result = pattern.exec(query);
+        if (result) {
+            alarm_texts.push([result.index, result.index + result[0].length]);
+        }
+        return result;
+    }
+    
     
     let now = new Date(),
-        match;
+        result;
     let year = now.getFullYear(),
         month = now.getMonth() + 1,
         day = now.getDate();
@@ -63,55 +72,68 @@ const parse = (query) => {
     if (query.indexOf('中午') > 0) hour = 12;
     if (query.indexOf('下午') > 0) hour = 15;
     if (query.indexOf('晚') > 0) hour = 20;
+    
+    result = /(\d{1,2})\/(\d{1,2})\/(\d{2,4})/g.exec(query);
+    if (result) {
+        month = convert(result[1]);
+        day = convert(result[2]);
+        year = convert(result[3]);
+    }
+    
+    result = /(\d{1,2}):(\d{1,2})/g.exec(query);
+    if (result) {
+        hour = convert(result[1]);
+        minute = convert(result[2]);
+    }
 
-    match = /([0-9一二两三四五六七八九十]+)月/g.exec(query);
-    if (match) month = convert(match[1]);
+    result = /([0-9一二两三四五六七八九十]+)月/g.exec(query);
+    if (result) month = convert(result[1]);
 
-    match = /月([0-9一二两三四五六七八九十]+)[日号]?/g.exec(query);
-    if (match) day = convert(match[1]);
+    result = /月([0-9一二两三四五六七八九十]+)[日号]?/g.exec(query);
+    if (result) day = convert(result[1]);
 
-    match = /(下*)(星期|周|礼拜)([1-7一二三四五六天日])/g.exec(query);
-    if (match) {
+    result = /(下*)(星期|周|礼拜)([1-7一二三四五六天日])/g.exec(query);
+    if (result) {
         let day_of_week = now.getDay();
         if (day_of_week === 0) day_of_week += 7; // let week start at Monday
-        let target = convert(match[3]);
+        let target = convert(result[3]);
         let offset = target - day_of_week;
-        if (match[1]) offset += 7 * match[1].length;
+        if (result[1]) offset += 7 * result[1].length;
         if (offset < 0) offset += 7;
         day += offset;
     }
 
-    match = /([0-9一二两三四五六七八九十]+)天后/g.exec(query);
-    if (match) day += convert(match[1]);
+    result = /([0-9一二两三四五六七八九十]+)天后/g.exec(query);
+    if (result) day += convert(result[1]);
 
-    match = /(大*)后天/g.exec(query);
-    if (match) day += 2 + match[1].length;
+    result = /(大*)后天/g.exec(query);
+    if (result) day += 2 + result[1].length;
 
-    match = /([0-9一二两三四五六七八九十]+)点/g.exec(query);
-    if (match) hour = convert(match[1]);
+    result = /([0-9一二两三四五六七八九十]+)点/g.exec(query);
+    if (result) hour = convert(result[1]);
 
-    match = /([0-9一二两三四五六七八九十]+)小时后/g.exec(query);
-    if (match) {
-        hour = now.getHours() + convert(match[1]);
+    result = /([0-9一二两三四五六七八九十]+)小时后/g.exec(query);
+    if (result) {
+        hour = now.getHours() + convert(result[1]);
         minute = now.getMinutes();
     }
 
-    match = /点([0-9一二两三四五六七八九十]+)/g.exec(query);
-    if (match) minute = convert(match[1]);
+    result = /点([0-9一二两三四五六七八九十]+)/g.exec(query);
+    if (result) minute = convert(result[1]);
 
-    match = /点(一|三)刻/g.exec(query);
-    if (match) minute = convert(match[1]) * 15;
+    result = /点(一|三)刻/g.exec(query);
+    if (result) minute = convert(result[1]) * 15;
 
 
-    match = /([0-9一二两三四五六七八九十]+)分钟?后/g.exec(query);
-    if (match) minute = now.getMinutes() + convert(match[1]);
+    result = /([0-9一二两三四五六七八九十]+)分钟?后/g.exec(query);
+    if (result) minute = now.getMinutes() + convert(result[1]);
 
     if (hour < 10) hour += 12; // 10点前默认晚上
 
     if (query.indexOf('点半') >= 0) minute = 30;
     if (query.indexOf('明') >= 0) day++;
-    if (query.search(/(下午|晚上?)/g) >= 0 && hour < 13) hour += 12;
-    if (query.search(/(上午|早上?)/g) >= 0 && hour > 13) hour -= 12;
+    if (query.search(/(下午|晚上?|PM)/gi) >= 0 && hour < 13) hour += 12;
+    if (query.search(/(上午|早上?|AM)/gi) >= 0 && hour > 13) hour -= 12;
 
     let target_date = new Date(year, month - 1, day, hour, minute, 0, 0);
     let hour_12 = hour,
@@ -134,6 +156,24 @@ const parse = (query) => {
             day_str = 'Tomorrow';
     }
     let date_str = `${day_str}, ${day_name[target_date.getDay()]}, ${hour_12}:${minute_padded} ${AP}`;
+    
+    if (tokens.length === 1) {
+        let mask = Array.from({length: command.length}, (v, i) => true);
+        for (let i = 0; i < alarm_texts.length; i++) {
+            let start = alarm_texts[i][0];
+            let end = alarm_texts[i][1];
+            for (let j = start; j < end + 1; j++) {
+                mask[j] = false;
+            }
+        }
+        let new_command = '';
+        for (let i = 0; i < command.length; i++) {
+            if (mask[i]) {
+                new_command += command[i];
+            }
+        }
+        command = new_command;
+    }
 
     return {
         target_date,
