@@ -41,14 +41,14 @@ const convert = (s) => {
 }
 
 const parse = (query) => {
-    // 明天早上八点 去买早饭
-    // target_date command
+    // 明早八点 去买早饭 => target_date command
+    //  明早八点 去买早饭 => query[0] = ' ', no parsing done
+    // 明早八点起床 去星期五买早饭 => alarm: 明早八点, todo: 起床 去..., no parsing done after first ' '
     let command = query;
     let tokens = query.split(' ');
     if (tokens.length > 1) {
-        command = tokens.slice(1, tokens.length).join(' ')
         query = tokens[0];
-        if (tokens[0] === '') {
+        if (query.length === 0) {
             return {
                 target_date: null,
                 command: command
@@ -176,25 +176,23 @@ const parse = (query) => {
     }
     let date_str = `${day_str}, ${day_name[target_date.getDay()]}, ${hour_12}:${minute_padded} ${AP}`;
 
-    if (tokens.length === 1) {
-        let mask = Array.from({
-            length: command.length
-        }, (v, i) => true);
-        for (let i = 0; i < alarm_texts.length; i++) {
-            let start = alarm_texts[i][0];
-            let end = alarm_texts[i][1];
-            for (let j = start; j < end; j++) {
-                mask[j] = false;
-            }
+    let mask = Array.from({
+        length: command.length
+    }, (v, i) => true);
+    for (let i = 0; i < alarm_texts.length; i++) {
+        let start = alarm_texts[i][0];
+        let end = alarm_texts[i][1];
+        for (let j = start; j < end; j++) {
+            mask[j] = false;
         }
-        let new_command = '';
-        for (let i = 0; i < command.length; i++) {
-            if (mask[i]) {
-                new_command += command[i];
-            }
-        }
-        command = new_command;
     }
+    let new_command = '';
+    for (let i = 0; i < command.length; i++) {
+        if (mask[i]) {
+            new_command += command[i];
+        }
+    }
+    command = new_command;
 
     return {
         target_date,
