@@ -59,7 +59,6 @@ const parse = (query) => {
         return result;
     }
     
-    
     let now = new Date(),
         result;
     let year = now.getFullYear(),
@@ -68,31 +67,31 @@ const parse = (query) => {
     let hour = 10,
         minute = 0; // defaults hour to 10 AM and minute to 0
 
-    if (query.indexOf('上午') > 0) hour = 10;
-    if (query.indexOf('中午') > 0) hour = 12;
-    if (query.indexOf('下午') > 0) hour = 15;
-    if (query.indexOf('晚') > 0) hour = 20;
+    if (match(/上午/g, query)) hour = 10;
+    if (match(/中午/g, query)) hour = 12;
+    if (match(/下午/g, query)) hour = 15;
+    if (match(/晚上?/g, query)) hour = 20;
     
-    result = /(\d{1,2})\/(\d{1,2})\/(\d{2,4})/g.exec(query);
+    result = match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/g, query);
     if (result) {
         month = convert(result[1]);
         day = convert(result[2]);
         year = convert(result[3]);
     }
     
-    result = /(\d{1,2}):(\d{1,2})/g.exec(query);
+    result = match(/(\d{1,2}):(\d{1,2})/g, query);
     if (result) {
         hour = convert(result[1]);
         minute = convert(result[2]);
     }
 
-    result = /([0-9一二两三四五六七八九十]+)月/g.exec(query);
+    result = match(/([0-9一二两三四五六七八九十]+)月/g, query);
     if (result) month = convert(result[1]);
 
-    result = /月([0-9一二两三四五六七八九十]+)[日号]?/g.exec(query);
+    result = match(/月([0-9一二两三四五六七八九十]+)[日号]?/g, query);
     if (result) day = convert(result[1]);
 
-    result = /(下*)(星期|周|礼拜)([1-7一二三四五六天日])/g.exec(query);
+    result = match(/(下*)(星期|周|礼拜)([1-7一二三四五六天日])/g, query);
     if (result) {
         let day_of_week = now.getDay();
         if (day_of_week === 0) day_of_week += 7; // let week start at Monday
@@ -103,37 +102,37 @@ const parse = (query) => {
         day += offset;
     }
 
-    result = /([0-9一二两三四五六七八九十]+)天后/g.exec(query);
+    result = match(/([0-9一二两三四五六七八九十]+)天后/g, query);
     if (result) day += convert(result[1]);
 
-    result = /(大*)后天/g.exec(query);
+    result = match(/(大*)后天/g, query);
     if (result) day += 2 + result[1].length;
 
-    result = /([0-9一二两三四五六七八九十]+)点/g.exec(query);
+    result = match(/([0-9一二两三四五六七八九十]+)点/g, query);
     if (result) hour = convert(result[1]);
 
-    result = /([0-9一二两三四五六七八九十]+)小时后/g.exec(query);
+    result = match(/([0-9一二两三四五六七八九十]+)小时后/g, query);
     if (result) {
         hour = now.getHours() + convert(result[1]);
         minute = now.getMinutes();
     }
 
-    result = /点([0-9一二两三四五六七八九十]+)/g.exec(query);
+    result = match(/点([0-9一二两三四五六七八九十]+)/g, query);
     if (result) minute = convert(result[1]);
 
-    result = /点(一|三)刻/g.exec(query);
+    result = match(/点(一|三)刻/g, query);
     if (result) minute = convert(result[1]) * 15;
 
 
-    result = /([0-9一二两三四五六七八九十]+)分钟?后/g.exec(query);
+    result = match(/([0-9一二两三四五六七八九十]+)分钟?后/g, query);
     if (result) minute = now.getMinutes() + convert(result[1]);
 
     if (hour < 10) hour += 12; // 10点前默认晚上
 
-    if (query.indexOf('点半') >= 0) minute = 30;
-    if (query.indexOf('明') >= 0) day++;
-    if (query.search(/(下午|晚上?|PM)/gi) >= 0 && hour < 13) hour += 12;
-    if (query.search(/(上午|早上?|AM)/gi) >= 0 && hour > 13) hour -= 12;
+    if (match(/点半/g, query)) minute = 30;
+    if (match(/明天?/g, query)) day++;
+    if (match(/(下午|晚上?|PM)/gi, query) && hour < 13) hour += 12;
+    if (match(/(上午|早上?|AM)/gi, query) && hour > 13) hour -= 12;
 
     let target_date = new Date(year, month - 1, day, hour, minute, 0, 0);
     let hour_12 = hour,
@@ -157,12 +156,13 @@ const parse = (query) => {
     }
     let date_str = `${day_str}, ${day_name[target_date.getDay()]}, ${hour_12}:${minute_padded} ${AP}`;
     
+    
     if (tokens.length === 1) {
         let mask = Array.from({length: command.length}, (v, i) => true);
         for (let i = 0; i < alarm_texts.length; i++) {
             let start = alarm_texts[i][0];
             let end = alarm_texts[i][1];
-            for (let j = start; j < end + 1; j++) {
+            for (let j = start; j < end; j++) {
                 mask[j] = false;
             }
         }
