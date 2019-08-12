@@ -19,6 +19,15 @@ function fetch() {
                     }
                 });
             }
+            data.push({
+                url: 'https://newsapi.org/',
+                image: {
+                    src: null,
+                },
+                label: {
+                    text: 'Powered by NewsAPI.org',
+                }
+            });
             $("list").data = data;
             $("list").endRefreshing();
             $ui.clearToast();
