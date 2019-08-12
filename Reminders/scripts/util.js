@@ -132,9 +132,11 @@ const parse = (query) => {
 
     result = match(/([0-9一二两三四五六七八九十]+)?个?(半)?(小时)?([0-9一二两三四五六七八九十]+)?(分钟?)?后/, query);
     if (result) {
-        let hour_offset = result[1] ? convert(result[1]) : 0;
-        let minute_offset = result[4] ? convert(result[4]) : 0;
-        minute_offset = result[2] ? 30 : minute_offset;
+        let first_n = result[1] || result[4];
+        let second_n = result[4] || result[1];
+        let hour_offset = result[3] && first_n ? convert(first_n) : 0;
+        let minute_offset = result[5] && second_n ? convert(second_n) : 0;
+        minute_offset = result[3] && result[2] ? 30 : minute_offset;
         hour = now.getHours() + hour_offset;
         minute = now.getMinutes() + minute_offset;
         if (minute >= 60) {
