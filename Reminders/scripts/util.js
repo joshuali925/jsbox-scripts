@@ -139,23 +139,24 @@ const parse = (query) => {
     result = match(/([0-9零一二两三四五六七八九十百]+)[天日]后/, query);
     if (result) day += convert(result[1]);
 
-    result = match(/([0-9零一二两三四五六七八九十百]+)?个?(半)?(小时)?([0-9零一二两三四五六七八九十百]+)?(分钟?)?后/, query);
+    result = match(/([0-9零一二两三四五六七八九十百]+)?个?(半)?(小时)?([0-9零一二两三四五六七八九十百]+)?(小时|分钟?)后/, query);
     if (result && (result[3] || result[5])) {
         let first_n = result[1] || result[4];
         let second_n = result[4] || result[1];
-        let hour_offset = result[3] && first_n ? convert(first_n) : 0;
-        let minute_offset = result[5] && second_n ? convert(second_n) : 0;
-        minute_offset = result[3] && result[2] ? 30 : minute_offset;
+        let hour_offset = (result[3] || result[5] === '小时') && first_n ? convert(first_n) : 0;
+        let minute_offset = result[5] !== '小时' && second_n ? convert(second_n) : 0;
+        minute_offset = (result[3] || result[5] === '小时') && result[2] ? 30 : minute_offset;
         hour = now.getHours() + hour_offset;
         minute = now.getMinutes() + minute_offset;
-        while (minute >= 60) {
-            hour++;
-            minute -= 60;
-        }
-        while (hour >= 24) {
-            day++;
-            hour -= 24;
-        }
+    }
+    
+    while (minute >= 60) {
+        hour++;
+        minute -= 60;
+    }
+    while (hour >= 24) {
+        day++;
+        hour -= 24;
     }
 
     if (alarm_texts.length === 0) {
