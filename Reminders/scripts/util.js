@@ -46,7 +46,16 @@ const convert = (s) => {
     return n;
 }
 
-let month_days = [null, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const get_days_in_month = (month, year) => {
+    let month_days = [null, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let days = month_days[month];
+    if (month === 2 && year % 4 === 0) {
+        if (year % 100 !== 0 || year % 400 === 0) {
+            days++;
+        }
+    }
+    return days;
+}
 
 const parse = (query) => {
     // 明早八点 去买早饭 => target_date command
@@ -142,10 +151,10 @@ const parse = (query) => {
     if (match(/(下午|晚上?|PM)/i, query) && hour < 13) hour += 12;
     if (match(/(上午|早上?|AM)/i, query) && hour > 13) hour -= 12;
 
-    result = match(/([0-9零一二两三四五六七八九十百]+)[天日]后/, query);
+    result = match(/([0-9零一二两三四五六七八九十百千万]+)[天日]后/, query);
     if (result) day += convert(result[1]);
 
-    result = match(/([0-9零一二两三四五六七八九十百]+)?个?(半)?(小时)?([0-9零一二两三四五六七八九十百]+)?(小时|分钟?)后/, query);
+    result = match(/([0-9零一二两三四五六七八九十百千万]+)?个?(半)?(小时)?([0-9零一二两三四五六七八九十百]+)?(小时|分钟?)后/, query);
     if (result && (result[3] || result[5])) {
         let first_n = result[1] || result[4];
         let second_n = result[4] || result[1];
@@ -164,8 +173,9 @@ const parse = (query) => {
         hour -= 24;
         day++;
     }
-    while (day > month_days[month]) {
-        day -= month_days[month];
+    
+    while (day > get_days_in_month(month, year)) {
+        day -= get_days_in_month(month, year);
         month++;
         if (month > 12) {
             month -= 12;
