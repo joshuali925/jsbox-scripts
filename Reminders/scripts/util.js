@@ -118,14 +118,14 @@ const parse = (query) => {
         month = convert(result[1]);
         day = 1;
         if (result[2] && result[2][0] === '中') {
-            day = Math.floor(month_days[month] / 2);
+            day = Math.floor(get_days_in_month(month, year) / 2);
         } else if (result[2] === '底') {
-            day = month_days[month];
+            day = get_days_in_month(month, year);
         }
         day = result[3] ? convert(result[3]) : day;
     }
 
-    result = match(/(下*)(星期|周|礼拜)([1-7一二三四五六天日])/, query);
+    result = match(/(下*)个?(星期|周|礼拜)([1-7一二三四五六天日])/, query);
     if (result) {
         let day_of_week = now.getDay();
         if (day_of_week === 0) day_of_week += 7; // let week start at Monday
@@ -187,11 +187,17 @@ const parse = (query) => {
         day++;
     }
     
-    if (day > 100000) {
+    // will not parse if offset too large
+    if (Math.min(day, month) > 100000) {
         return {
             target_date: null,
             command: query
         };
+    }
+    
+    while (month > 12) {
+        month -= 12;
+        year++;
     }
     
     while (day > get_days_in_month(month, year)) {
@@ -203,6 +209,7 @@ const parse = (query) => {
         }
     }
 
+    // if nothing is parsed
     if (alarm_texts.length === 0) {
         return {
             target_date: null,
@@ -267,6 +274,9 @@ const add_reminder = (date, command) => {
             url: "",
             handler: function (resp) {
                 $ui.toast("Reminder added!");
+                $('input').text = '';
+                $('alarm').text = 'Alarm: No alarm';
+                $('todo').text = 'Todo: None';
             }
         });
     }

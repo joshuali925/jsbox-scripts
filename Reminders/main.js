@@ -1,6 +1,7 @@
 const util = require('scripts/util');
 const parse = util.parse;
 const add_reminder = util.add_reminder;
+let parsed;
 
 $ui.render({
     props: {
@@ -28,9 +29,6 @@ $ui.render({
             returned: (sender) => {
                 if ($('input').text) {
                     add_reminder(parsed.target_date, parsed.command);
-                    $('input').text = '';
-                    $('alarm').text = 'Alarm: No alarm';
-                    $('todo').text = 'Todo: ';
                 } else {
                     sender.blur();
                 }
@@ -54,7 +52,7 @@ $ui.render({
         type: "label",
         props: {
             id: 'todo',
-            text: 'Todo:',
+            text: 'Todo: None',
         },
         layout: function (make, view) {
             make.top.equalTo($('alarm').bottom).inset(10);
