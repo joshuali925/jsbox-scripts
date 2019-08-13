@@ -82,6 +82,7 @@ const parse = (query) => {
     let match = (pattern, query) => {
         let result = pattern.exec(query);
         if (result) {
+            // $console.info(pattern, result);
             alarm_texts.push([result.index, result.index + result[0].length]);
         }
         return result;
@@ -93,13 +94,16 @@ const parse = (query) => {
         month = now.getMonth() + 1,
         day = now.getDate();
     let hour = 10,
-        minute = 0; // defaults hour to 10:00 AM
+        minute = 0; // defaults to 10:00 AM
 
-    if (match(/早上?/, query)) hour = 8;
-    if (match(/上午/, query)) hour = 10;
-    if (match(/中午/, query)) hour = 12;
-    if (match(/下午/, query)) hour = 15;
-    if (match(/晚上?/, query)) hour = 20;
+    result = match(/(早上?|上午|中午|下午|晚上?)/, query);
+    if (result) hour = {
+        '早': 8,
+        '上': 10,
+        '中': 12,
+        '下': 15,
+        '晚': 20
+    } [result[1][0]];
 
     // mm/dd/yyyy, mm-dd-yyyy, mm.dd.yyyy
     result = match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/, query);
@@ -116,14 +120,15 @@ const parse = (query) => {
         minute = convert(result[2]);
     }
 
-    result = match(/今?([明0-9一二两三四五六七八九十]+)年/, query);
+    result = match(/([今明0-9一二两三四五六七八九十]+)年/, query);
     if (result) {
-        year = result[1] === '明' ? year + 1 : convert(result[1]);
+        if (result[1] !== '今')
+            year = result[1] === '明' ? year + 1 : convert(result[1]);
         month = 1;
         day = 1;
     }
 
-    result = match(/(下个?)?([0-9一二两三四五六七八九十]+)?月(初|中旬?|底)?([0-9一二两三四五六七八九十]+)?[日号]?/, query);
+    result = match(/(下)?[这本]?个?([0-9一二两三四五六七八九十]+)?月(初|中旬?|底)?([0-9一二两三四五六七八九十]+)?[日号]?/, query);
     if (result) {
         if (result[1]) month++;
         else if (result[2]) month = convert(result[2]);
@@ -136,7 +141,7 @@ const parse = (query) => {
         day = result[4] ? convert(result[4]) : day;
     }
 
-    result = match(/([0-9一二两三四五六七八九十]+)?[日号]/, query);
+    result = match(/([0-9一二两三四五六七八九十]+)[日号]/, query);
     if (result) day = convert(result[1]);
 
     result = match(/(下*)个?(星期|周|礼拜)([1-7一二三四五六天日])/, query);
@@ -163,7 +168,7 @@ const parse = (query) => {
     result = match(/(今|明|大*后)[早晚日天]/, query);
     if (result) {
         day += convert(result[1]);
-        if (result[1].length > 1)  // 大大大大后天
+        if (result[1].length > 1) // 大大大大后天
             day += result[1].length - 1;
     }
 
