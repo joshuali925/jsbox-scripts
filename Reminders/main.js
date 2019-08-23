@@ -19,12 +19,10 @@ $ui.render({
         events: {
             changed: (sender) => {
                 parsed = parse($("input").text);
-                if (parsed.target_date) {
-                    $('alarm').text = 'Alarm: ' + parsed.date_str;
-                } else {
-                    $('alarm').text = 'Alarm: No alarm';
-                }
-                $('todo').text = 'Todo: ' + parsed.command;
+                $('alarm').text = 'Alarm: ';
+                $('alarm').text += parsed.target_date ? parsed.date_str : 'No alarm';
+                $('todo').text = 'Todo: ';
+                $('todo').text += parsed.command ? parsed.command : 'None';
             },
             returned: (sender) => {
                 if ($('input').text) {

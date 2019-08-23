@@ -106,7 +106,7 @@ const parse = (query) => {
     } [result[1][0]];
 
     // mm/dd/yyyy, mm-dd-yyyy, mm.dd.yyyy
-    result = match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/, query);
+    result = match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/, query);
     if (result) {
         month = convert(result[1]);
         day = convert(result[2]);
@@ -295,6 +295,7 @@ const add_reminder = (date, command) => {
             url: "",
             handler: function (resp) {
                 $ui.toast("Reminder added!");
+                $device.taptic(0);
                 $('input').text = '';
                 $('alarm').text = 'Alarm: No alarm';
                 $('todo').text = 'Todo: None';
