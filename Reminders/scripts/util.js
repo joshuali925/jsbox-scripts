@@ -1,6 +1,6 @@
 const nums = {
     '天': 7,
-    '日': 7, // let week start at Monday
+    '日': 7, // let week start on Monday
     '零': 0,
     '今': 0,
     '一': 1,
@@ -147,7 +147,7 @@ const parse = (query) => {
     result = match(/(下*)个?(星期|周|礼拜)([1-7一二三四五六天日])/, query);
     if (result) {
         let day_of_week = now.getDay();
-        if (day_of_week === 0) day_of_week += 7; // let week start at Monday
+        if (day_of_week === 0) day_of_week += 7; // let week start on Monday
         let target = convert(result[3]);
         let offset = target - day_of_week;
         if (result[1]) offset += 7 * result[1].length;
@@ -238,17 +238,11 @@ const parse = (query) => {
         }
     }
 
+    // generate target date object and its string representation
     let target_date = new Date(year, month - 1, day, hour, minute, 0, 0);
-    let hour_12 = hour,
-        AP = 'AM';
-    if (hour > 11) {
-        AP = 'PM';
-        if (hour > 12)
-            hour_12 -= 12;
-    }
+    let hour_12 = hour > 12 ? hour - 12 : hour,
+        AP = hour < 12 ? 'AM' : 'PM';
     let month_name = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    // let day_name = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    // let month_name = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     let day_name = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     let minute_padded = String(minute).padStart(2, '0');
     let day_str = `${month_name[month - 1]} ${day}, ${year}`;
@@ -281,7 +275,6 @@ const parse = (query) => {
     new_command = '';
     for (let i = 1; i < masks.length; i += 2) {
         new_command += command.slice(masks[i - 1], masks[i]);
-        console.log(new_command)
     }
     command = new_command.trim();
 
