@@ -250,7 +250,7 @@ const parse = (query) => {
     // let day_name = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     // let month_name = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     let day_name = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    let minute_padded = minute > 10 ? minute : '0' + minute;
+    let minute_padded = String(minute).padStart(2, '0');
     let day_str = `${month_name[month - 1]} ${day}, ${year}`;
     if (month - 1 === now.getMonth() && year === now.getFullYear()) {
         if (day === now.getDate())
@@ -294,17 +294,24 @@ const add_reminder = (date, command) => {
             alarmDate: date,
             url: "",
             handler: function (resp) {
-                $ui.toast("Reminder added!");
-                $device.taptic(0);
-                $('input').text = '';
-                $('alarm').text = 'Alarm: No alarm';
-                $('todo').text = 'Todo: None';
+                if (!resp.error) {
+                    $ui.toast("Reminder added!");
+                    $device.taptic(0);
+                    $('input').text = '';
+                    $('alarm').text = 'Alarm: No alarm';
+                    $('todo').text = 'Todo: None';
+                } else {
+                    $ui.alert({
+                        title: "Error",
+                        message: resp,
+                    });
+                }
             }
         });
     }
 }
 
 module.exports = {
-    parse: parse,
-    add_reminder: add_reminder,
+    parse,
+    add_reminder,
 };
