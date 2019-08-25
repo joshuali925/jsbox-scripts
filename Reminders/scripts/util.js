@@ -260,21 +260,28 @@ const parse = (query) => {
     }
     let date_str = `${day_str}, ${day_name[target_date.getDay()]}, ${hour_12}:${minute_padded} ${AP}`;
 
-    let mask = Array.from({
-        length: command.length
-    }, (v, i) => true);
-    for (let i = 0; i < alarm_texts.length; i++) {
-        let start = alarm_texts[i][0];
-        let end = alarm_texts[i][1];
-        for (let j = start; j < end; j++) {
-            mask[j] = false;
+    // merges intervals of alarm text indices together
+    alarm_texts.sort((a, b) => a[0] - b[0]);
+    let masks = [alarm_texts[0]];
+    let new_interval = alarm_texts[0];
+    for (let interval of alarm_texts) {
+        if (interval[0] <= new_interval[1]) {
+            new_interval[1] = Math.max(interval[1], new_interval[1]);
+        } else {
+            new_interval = interval;
+            masks.push(new_interval);
         }
     }
-    let new_command = '';
-    for (let i = 0; i < command.length; i++) {
-        if (mask[i]) {
-            new_command += command[i];
-        }
+    // flatten array and add 0, length to each end
+    // eg. [[3, 5], [7, 10]] => [0, 3, 5, 7, 10, 14]
+    masks = masks.flat(depth = 1);
+    masks.unshift(0);
+    masks.push(command.length);
+    // construct new command based on [i0, j0, i1, j1, ...]
+    new_command = '';
+    for (let i = 1; i < masks.length; i += 2) {
+        new_command += command.slice(masks[i - 1], masks[i]);
+        console.log(new_command)
     }
     command = new_command.trim();
 
