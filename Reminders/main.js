@@ -1,5 +1,5 @@
+const parse = require('scripts/parser').parse;
 const util = require('scripts/util');
-const parse = util.parse;
 const add_reminder = util.add_reminder;
 let parsed;
 
