@@ -19,11 +19,25 @@ const add_reminder = (date, command) => {
                         message: resp,
                     });
                 }
+                refresh_list();
             }
         });
     }
 };
 
+const refresh_list = () => {
+    $reminder.fetch({
+        handler: function (resp) {
+            let events = resp.events.filter(reminder => !reminder.completed && reminder.calendar.title === 'Reminders');
+            // console.log(events)
+            // console.log(events[0].calendar)
+            // console.log(events[0].alarmDate.toLocaleString())
+            $('reminders').data = events.map(reminder => (reminder.alarmDate && reminder.alarmDate.toLocaleString() + ': ') + reminder.title).reverse();
+        }
+    });
+};
+
 module.exports = {
     add_reminder,
+    refresh_list: refresh_list,
 };
