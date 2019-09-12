@@ -77,7 +77,10 @@ const parse = (query) => {
         // otherwise only parse until first ' '
         query = query.slice(0, space_index);
     }
+    // command = user input, then excludes alarm information
+    // query = query[0: first space], will be parsed for alarm
 
+    // array to record alarm information for removal from 'command' at the end
     let alarm_texts = [];
     let match = (pattern, query) => {
         let result = pattern.exec(query);
@@ -129,7 +132,9 @@ const parse = (query) => {
     }
 
     result = match(/(下)?[这本]?个?([0-9一二两三四五六七八九十]+)?月(初|中旬?|底)?([0-9一二两三四五六七八九十]+)?[日号]?/, query);
-    if (result) {
+    // this is the only regex that can be matched with no groups captured
+    // so also needs to check if matched at least 1 group
+    if (result && result.some((val, i) => i !== 0 && val)) {
         if (result[1]) month++;
         else if (result[2]) month = convert(result[2]);
         day = 1;
@@ -189,6 +194,7 @@ const parse = (query) => {
     }
 
     result = match(/([0-9零一二两三四五六七八九十百千万]+)?个?(半)?(小时)?([0-9零一二两三四五六七八九十百]+)?个?(小时|分钟?)后/, query);
+    // make sure time unit is captured
     if (result && (result[3] || result[5])) {
         let first_n = result[1] || result[4];
         let second_n = result[4] || result[1];
@@ -203,7 +209,7 @@ const parse = (query) => {
     if (alarm_texts.length === 0) {
         return {
             target_date: null,
-            command: query || 'None'
+            command: command || 'None'
         };
     }
 
@@ -220,7 +226,7 @@ const parse = (query) => {
     if (Math.min(day, month) > 100000) {
         return {
             target_date: null,
-            command: query
+            command: command || 'None'
         };
     }
 
@@ -241,7 +247,7 @@ const parse = (query) => {
     // generate target date object and its string representation
     let target_date = new Date(year, month - 1, day, hour, minute, 0, 0);
     let hour_12 = hour % 12;
-        AP = hour < 12 ? 'AM' : 'PM';
+    AP = hour < 12 ? 'AM' : 'PM';
     let month_name = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     let day_name = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     let minute_padded = String(minute).padStart(2, '0');
