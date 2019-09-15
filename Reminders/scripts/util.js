@@ -32,7 +32,7 @@ const refresh_list = () => {
             // console.log(events)
             // console.log(events[0].calendar)
             // console.log(events[0].alarmDate.toLocaleString())
-            $('reminders').data = events.map(reminder => (reminder.alarmDate && reminder.alarmDate.toLocaleString() + ': ') + reminder.title).reverse();
+            $('reminders').data = events.map(reminder => (reminder.alarmDate ? reminder.alarmDate.toLocaleString() + ': ' : '') + reminder.title).reverse();
         }
     });
 };

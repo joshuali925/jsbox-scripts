@@ -84,11 +84,13 @@ const parse = (query) => {
     let alarm_texts = [];
     let match = (pattern, query) => {
         let result = pattern.exec(query);
-        if (result) {
+        // check matched something, and at least 1 group is captured
+        // result = ['everything matched', 'group1', 'group2', ...]
+        if (result && result.some((val, i) => i !== 0 && val)) {
             // $console.info(pattern, result);
             alarm_texts.push([result.index, result.index + result[0].length]);
+            return result;
         }
-        return result;
     };
 
     let now = new Date(),
@@ -132,9 +134,7 @@ const parse = (query) => {
     }
 
     result = match(/(下)?[这本]?个?([0-9一二两三四五六七八九十]+)?月(初|中旬?|底)?([0-9一二两三四五六七八九十]+)?[日号]?/, query);
-    // this is the only regex that can be matched with no groups captured
-    // so also needs to check if matched at least 1 group
-    if (result && result.some((val, i) => i !== 0 && val)) {
+    if (result) {
         if (result[1]) month++;
         else if (result[2]) month = convert(result[2]);
         day = 1;
@@ -194,8 +194,7 @@ const parse = (query) => {
     }
 
     result = match(/([0-9零一二两三四五六七八九十百千万]+)?个?(半)?(小时)?([0-9零一二两三四五六七八九十百]+)?个?(小时|分钟?)后/, query);
-    // make sure time unit is captured
-    if (result && (result[3] || result[5])) {
+    if (result) {
         let first_n = result[1] || result[4];
         let second_n = result[4] || result[1];
         let hour_offset = (result[3] || result[5] === '小时') && first_n ? convert(first_n) : 0;
@@ -272,7 +271,7 @@ const parse = (query) => {
             masks.push(new_interval);
         }
     }
-    // flatten array and add 0, length to each end
+    // flatten array, add 0 to beginning, string length to end
     // eg. [[3, 5], [7, 10]] => [0, 3, 5, 7, 10, 14]
     masks = masks.flat(depth = 1);
     masks.unshift(0);
