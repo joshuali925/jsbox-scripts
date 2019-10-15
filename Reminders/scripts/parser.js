@@ -179,7 +179,7 @@ const parse = (query) => {
 
     if (hour < 10) hour += 12; // 10点前默认晚上
     if (match(/(下午|晚上?|PM)/i, query) && hour < 13) hour += 12;
-    if (match(/(上午|早上?|AM)/i, query) && hour > 13) hour -= 12;
+    if (match(/(上午|早上?|AM)/i, query) && hour >= 12) hour -= 12;
 
     result = match(/([0-9零一二两三四五六七八九十百千万]+)?个?(月)?([0-9零一二两三四五六七八九十百千万]+)?个?(月|天|日|星期|周|礼拜)后/, query);
     if (result) {
@@ -245,7 +245,7 @@ const parse = (query) => {
 
     // generate target date object and its string representation
     let target_date = new Date(year, month - 1, day, hour, minute, 0, 0);
-    let hour_12 = hour % 12;
+    let hour_12 = hour > 12 ? hour % 12 : hour;  // do not change 12 PM
     AP = hour < 12 ? 'AM' : 'PM';
     let month_name = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     let day_name = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
