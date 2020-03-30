@@ -1,0 +1,8 @@
+{
+    "folders": [{
+        "uri": "webdav://webdav:111333d@10.0.0.112:8080/?encoding=utf8&binEncoding=utf8",
+        "name": "jsbox"
+    }, {
+        "path": "."
+    }]
+}

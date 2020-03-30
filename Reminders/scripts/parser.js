@@ -111,11 +111,15 @@ const parse = (query) => {
     } [result[1][0]];
 
     // mm/dd/yyyy, mm-dd-yyyy, mm.dd.yyyy
-    result = match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/, query);
+    result = match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.]?(\d{2,4})?/, query);
     if (result) {
         month = convert(result[1]);
         day = convert(result[2]);
-        year = convert(result[3]);
+        if (result[3]) {
+            year = convert(result[3]);
+            if (year < 1000)
+                year += 2000;
+        }
     }
 
     // hh:MM
@@ -245,8 +249,8 @@ const parse = (query) => {
 
     // generate target date object and its string representation
     let target_date = new Date(year, month - 1, day, hour, minute, 0, 0);
-    let hour_12 = hour > 12 ? hour % 12 : hour;  // do not change 12 PM
-    AP = hour < 12 ? 'AM' : 'PM';
+    let hour_12 = hour > 12 ? hour % 12 : hour; // do not change 12 PM
+    let AP = hour < 12 ? 'AM' : 'PM';
     let month_name = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     let day_name = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     let minute_padded = String(minute).padStart(2, '0');
@@ -277,7 +281,7 @@ const parse = (query) => {
     masks.unshift(0);
     masks.push(command.length);
     // construct new command based on [i0, j0, i1, j1, ...]
-    new_command = '';
+    let new_command = '';
     for (let i = 1; i < masks.length; i += 2) {
         new_command += command.slice(masks[i - 1], masks[i]);
     }
